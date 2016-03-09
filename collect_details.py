@@ -108,6 +108,7 @@ def get_allrepo(username):
     username = (generate_user_url(username))
     url = request.urlopen(username)
     data = url.read()
+    url.close()
     soup = BeautifulSoup(data)
     del username,url,data
     repo_list = soup.find_all('a',itemprop ="name codeRepository")
@@ -153,9 +154,10 @@ def get_followers(username):
         >> collect_details.get_followers(BeautifulSoup(url_obj))
     '''
     username += '/followers'
-    username = generate_user_url(username)
+    username = (generate_user_url(username))
     url = request.urlopen(username)
     data = url.read()
+    url.close()
     soup = BeautifulSoup(data)
     del data,url,username
     followers = {}
@@ -200,7 +202,6 @@ def get_following(username):
     del data,url,username
     following = {}
     following_list = soup.find_all('h3',class_ = "follow-list-name")
-    print (following_list)
     for name in following_list:
         following[name.get_text(strip = True)] = name.find('a').get('href')[1:]
     return following
