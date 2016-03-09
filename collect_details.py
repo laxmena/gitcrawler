@@ -13,7 +13,6 @@ Methods
     generate_user_url
     get_allrepo
     get_followers
-    get_following
 '''
 
 #Generates Github for the given Username
@@ -101,15 +100,14 @@ def get_allrepo(username):
     Example
     -------
         >> from gitcrawler import collect_details
-        >> collect_details.get_allrepo(BeautifulSoup(open(url)))
+        >> collect_details.get_allrepo(username)
     '''
     repository = []
     username += '?tab=repositories'
-    username = (generate_user_url(username))
-    url = request.urlopen(username)
+    url = request.urlopen(generate_user_url(username))
     data = url.read()
+    url.close()
     soup = BeautifulSoup(data)
-    del username,url,data
     repo_list = soup.find_all('a',itemprop ="name codeRepository")
     for repo in repo_list:
         repository.append(repo.get_text(strip = True))
@@ -121,7 +119,7 @@ if __name__ == '__main__':
     username = get_username()
     pprint.pprint(get_allrepo(username))
 
-def get_followers(username):
+def get_followers(username,list_flag=False):
     '''
     Method
     ------
@@ -130,46 +128,52 @@ def get_followers(username):
     Parameters
     ----------
     username                :       GitHub Username
+    list_flag               :       Flag to indicate the return type
+                                    True for List
+                                    Flase for Dict
 
     Function
     --------
-    Gets username of all the followers of user
+    Gets username of all the followers of the given user
 
     Return
     ------
-    List of followers name 'string' for the given user
+    List of followers name 'string' for the given user or
+    Dictionary of Followers name and username as key and value
 
     Example
     -------
         >> from gitcrawler import collect_details
-        >> collect_details.get_followers(BeautifulSoup(open(url)))
+        >> collect_details.get_followers('laxmena')
 
     Example
     -------
         >> from gitcrawler import collect_details
-        >> from urllib import request
-        >> url = 'www.github.com/laxmena'
-        >> url_obj = request.urlopen(url)
-        >> collect_details.get_followers(BeautifulSoup(url_obj))
+        >> collect_details.get_followers('laxmena',list_flag = True)
     '''
     username += '/followers'
-    username = generate_user_url(username)
-    url = request.urlopen(username)
+    url = request.urlopen(generate_user_url(username))
     data = url.read()
+    url.close()
     soup = BeautifulSoup(data)
-    del data,url,username
-    followers = {}
-    follower_list = soup.find_all('h3',class_ = "follow-list-name")
-    for name in follower_list:
-        followers[name.get_text(strip = True)] = name.find('a').get('href')[1:]
-
+    del data,url
+    followers_list = soup.find_all('h3',class_ = "follow-list-name")
+    if list_flag == False:
+        followers = {}
+        for name in followers_list:
+            followers[name.get_text(strip = True)] = name.find('a').get('href')[1:]
+    else:
+        followers = []
+        for name in followers_list:
+            followers.append(name.find('a').get('href')[1:])
     return followers
 
 if __name__ == '__main__':
+    print('Get followers')
     username = get_username()
     pprint.pprint(get_followers(username))
 
-def get_following(username):
+def get_following(username,list_flag = False):
     '''
     Method
     ------
@@ -178,6 +182,9 @@ def get_following(username):
     Parameters
     ----------
     username                :       GitHub Username
+    list_flag               :       Flag to indicate the return type
+                                    True for List
+                                    Flase for Dict
 
     Function
     --------
@@ -185,24 +192,30 @@ def get_following(username):
 
     Return
     ------
-    List of usernames 'string' that the given user follows
+    List of usernames 'string' that the given user follows if list_flag is True.
+    Dictionay of User's real name and his Github username as key and value.
 
     Example
     -------
         >> from gitcrawler import collect_details
-        >> collect_details.get_following(BeautifulSoup(open(url)))
+        >> collect_details.get_following(username)
+        >> collect_details.get_following(username,list_flag = True)
     '''
     username += '/following'
-    username = generate_user_url(username)
-    url = request.urlopen(username)
+    url = request.urlopen(generate_user_url(username))
     data = url.read()
+    url.close()
     soup = BeautifulSoup(data)
-    del data,url,username
-    following = {}
+    del data,url
     following_list = soup.find_all('h3',class_ = "follow-list-name")
-    print (following_list)
-    for name in following_list:
-        following[name.get_text(strip = True)] = name.find('a').get('href')[1:]
+    if list_flag == False:
+        following = {}
+        for name in following_list:
+            following[name.get_text(strip = True)] = name.find('a').get('href')[1:]
+    else:
+        following = []
+        for name in following_list:
+            following.append(name.find('a').get('href')[1:])
     return following
 
 if __name__ == '__main__':
@@ -232,12 +245,13 @@ def get_contribution(username):
     Example
     -------
         >> from gitcrawler import collect_details
-        >> collect_details.get_contribution(BeautifulSoup(open(url)))
+        >> collect_details.get_contribution(username)
     '''
-    url = request.urlopen(generate_user_url(username))
+    username = generate_user_url(username)
+    url = request.urlopen(username)
     data = url.read()
+    url.close()
     soup = BeautifulSoup(data)
-    del data,url
     contribution = []
     contribution_details = soup.find_all('rect',
                                          class_= 'day',
@@ -255,6 +269,7 @@ def get_contribution(username):
         if num_of_c != '0':
             temp_tuple = (date, num_of_c)
             contribution.append(temp_tuple)
+    del data,url, contribution_details, soup
     return contribution
 
 if __name__ == '__main__':
@@ -263,18 +278,46 @@ if __name__ == '__main__':
     print (get_contribution(username))
 
 def personal_details (username):
-    url = request.urlopen(generate_user_url(username))
+    '''
+    Method
+    ------
+    personal_details(username)
+
+    Parameters
+    ----------
+    usernames                   :          GitHub username
+
+    Function
+    --------
+    Retrives basic information of the user from the user's Github page
+
+    Return
+    ------
+    List containing the details about the user
+
+    Example
+    -------
+        >> from gitcrawler import collect_details
+        >> collect_details.personal_details('laxmena')
+    
+    '''
+    username = generate_user_url(username)
+    url = request.urlopen(username)
     data = url.read()
+    url.close()
     soup = BeautifulSoup(data)
-    del data,url
     details_list = []
+    name = soup.find('div',class_='vcard-fullname',itemprop='name').get_text()
+    details_list.append(name)
     details = soup.find_all('li',class_ = 'vcard-detail py-1 css-truncate \
                             css-truncate-target')
     for each in details:
-        details_list.append(each.get_text())
+        details_list.append(each.get_text(strip = True))
+    del url, username, data,soup, name, details
     return details_list
 
 if __name__ == '__main__':
     print ('personal_details')
     username = get_username()
     print (personal_details(username))
+
