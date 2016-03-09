@@ -13,7 +13,6 @@ Methods
     generate_user_url
     get_allrepo
     get_followers
-    get_following
 '''
 
 #Generates Github for the given Username
@@ -105,12 +104,10 @@ def get_allrepo(username):
     '''
     repository = []
     username += '?tab=repositories'
-    username = (generate_user_url(username))
-    url = request.urlopen(username)
+    url = request.urlopen(generate_user_url(username))
     data = url.read()
     url.close()
     soup = BeautifulSoup(data)
-    del username,url,data
     repo_list = soup.find_all('a',itemprop ="name codeRepository")
     for repo in repo_list:
         repository.append(repo.get_text(strip = True))
@@ -154,12 +151,11 @@ def get_followers(username):
         >> collect_details.get_followers(BeautifulSoup(url_obj))
     '''
     username += '/followers'
-    username = (generate_user_url(username))
-    url = request.urlopen(username)
+    url = request.urlopen(generate_user_url(username))
     data = url.read()
     url.close()
     soup = BeautifulSoup(data)
-    del data,url,username
+    del data,url
     followers = {}
     follower_list = soup.find_all('h3',class_ = "follow-list-name")
     for name in follower_list:
@@ -168,10 +164,11 @@ def get_followers(username):
     return followers
 
 if __name__ == '__main__':
+    print('Get followers')
     username = get_username()
     pprint.pprint(get_followers(username))
 
-def get_following(username):
+def get_following(username,list_flag = False):
     '''
     Method
     ------
@@ -187,7 +184,8 @@ def get_following(username):
 
     Return
     ------
-    List of usernames 'string' that the given user follows
+    List of usernames 'string' that the given user follows if list_flag is True.
+    Dictionay of User's real name and his Github username as key and value.
 
     Example
     -------
@@ -195,15 +193,20 @@ def get_following(username):
         >> collect_details.get_following(BeautifulSoup(open(url)))
     '''
     username += '/following'
-    username = generate_user_url(username)
-    url = request.urlopen(username)
+    url = request.urlopen(generate_user_url(username))
     data = url.read()
+    url.close()
     soup = BeautifulSoup(data)
-    del data,url,username
-    following = {}
+    del data,url
     following_list = soup.find_all('h3',class_ = "follow-list-name")
-    for name in following_list:
-        following[name.get_text(strip = True)] = name.find('a').get('href')[1:]
+    if list_flag == False:
+        following = {}
+        for name in following_list:
+            following[name.get_text(strip = True)] = name.find('a').get('href')[1:]
+    else:
+        following = []
+        for name in following_list:
+            following.append(name.find('a').get('href')[1:])
     return following
 
 if __name__ == '__main__':
@@ -237,6 +240,7 @@ def get_contribution(username):
     '''
     url = request.urlopen(generate_user_url(username))
     data = url.read()
+    url.close()
     soup = BeautifulSoup(data)
     del data,url
     contribution = []
@@ -266,9 +270,12 @@ if __name__ == '__main__':
 def personal_details (username):
     url = request.urlopen(generate_user_url(username))
     data = url.read()
+    url.close()
     soup = BeautifulSoup(data)
     del data,url
     details_list = []
+    name = soup.find('div',class_='vcard-fullname',itemprop='name').get_text()
+    details_list.append(name)
     details = soup.find_all('li',class_ = 'vcard-detail py-1 css-truncate \
                             css-truncate-target')
     for each in details:
