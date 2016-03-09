@@ -119,7 +119,7 @@ if __name__ == '__main__':
     username = get_username()
     pprint.pprint(get_allrepo(username))
 
-def get_followers(username):
+def get_followers(username,list_flag=False):
     '''
     Method
     ------
@@ -156,11 +156,15 @@ def get_followers(username):
     url.close()
     soup = BeautifulSoup(data)
     del data,url
-    followers = {}
-    follower_list = soup.find_all('h3',class_ = "follow-list-name")
-    for name in follower_list:
-        followers[name.get_text(strip = True)] = name.find('a').get('href')[1:]
-
+    followers_list = soup.find_all('h3',class_ = "follow-list-name")
+    if list_flag == False:
+        followers = {}
+        for name in followers_list:
+            followers[name.get_text(strip = True)] = name.find('a').get('href')[1:]
+    else:
+        followers = []
+        for name in followers_list:
+            followers.append(name.find('a').get('href')[1:])
     return followers
 
 if __name__ == '__main__':
@@ -238,11 +242,11 @@ def get_contribution(username):
         >> from gitcrawler import collect_details
         >> collect_details.get_contribution(BeautifulSoup(open(url)))
     '''
-    url = request.urlopen(generate_user_url(username))
+    username = generate_user_url(username)
+    url = request.urlopen(username)
     data = url.read()
     url.close()
     soup = BeautifulSoup(data)
-    del data,url
     contribution = []
     contribution_details = soup.find_all('rect',
                                          class_= 'day',
@@ -260,6 +264,7 @@ def get_contribution(username):
         if num_of_c != '0':
             temp_tuple = (date, num_of_c)
             contribution.append(temp_tuple)
+    del data,url, contribution_details, soup
     return contribution
 
 if __name__ == '__main__':
@@ -268,11 +273,11 @@ if __name__ == '__main__':
     print (get_contribution(username))
 
 def personal_details (username):
-    url = request.urlopen(generate_user_url(username))
+    username = generate_user_url(username)
+    url = request.urlopen(username)
     data = url.read()
     url.close()
     soup = BeautifulSoup(data)
-    del data,url
     details_list = []
     name = soup.find('div',class_='vcard-fullname',itemprop='name').get_text()
     details_list.append(name)
@@ -280,6 +285,7 @@ def personal_details (username):
                             css-truncate-target')
     for each in details:
         details_list.append(each.get_text())
+    del url, username, data,soup, name, details
     return details_list
 
 if __name__ == '__main__':
