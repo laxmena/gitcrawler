@@ -1,4 +1,4 @@
-# gitcrawler
+# Gitcrawler
 
 Gitcrawler is a spider which crawls through Github accounts and collects information about the username, user's name, Repositories, Contribution details, Followers, Others userss whom the current user follows and basic information of contact of the user.
 
