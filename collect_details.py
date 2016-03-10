@@ -114,10 +114,28 @@ def get_allrepo(username):
     del repo_list
     return repository
 
+##if __name__ == '__main__':
+##    print ('Gets all repository')
+##    username = get_username()
+##    pprint.pprint(get_allrepo(username))
+
+def get_followers_number(username):
+    user = username
+    username = generate_user_url(username)
+    url = request.urlopen(username)
+    data = url.read()
+    url.close()
+    soup = BeautifulSoup(data)
+    del data,url
+    hr = '/' + user + '/followers'
+    followers_list = soup.find_all('a',class_='vcard-stat',href = hr)
+    followers_num = 0
+    for i in followers_list:
+        followers_num = i.get_text(strip=True)[:-9]
+    return followers_num
+
 if __name__ == '__main__':
-    print ('Gets all repository')
-    username = get_username()
-    pprint.pprint(get_allrepo(username))
+    print (get_followers_number('sils1297'))
 
 def get_followers(username,list_flag=False):
     '''
